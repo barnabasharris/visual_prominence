@@ -38,15 +38,19 @@ if (dir.exists('outputs')) {
 dir.create('logs')
 dir.create('outputs')
 
-system(glue('chmod +x {wd}/python/viz.py'))
+system(glue('chmod -R +x {wd}/python/'))
 
 # pre-process date for analysis -----
-gridRes <- 50000
+gridRes <- 22500
 demFile <- 'bigdata/britain50m_int_rst_aligned.tif'
 
 # load terrain raster
 r <- terra::rast(demFile)
-# copy to template
+# make polygon outline of non-na cells
+r.bin <- r
+r.bin[!is.nan(r.bin)] <- 1
+r.bin.pol <- as.polygons(r.bin)
+# copy original r to template
 template <- terra::rast(r)
 # set new res of template
 res(template) <- gridRes
@@ -54,18 +58,20 @@ res(template) <- gridRes
 values(template) <- 1:ncell(template)
 # convert to polygons
 template.pols <- as.polygons(template)
+# clip grid by outline
+template.pols.m <- terra::mask(template.pols,r.bin.pol)
 
 # visualize
 if (env == 'LOCAL') {
   plot(r)
-  plot(template.pols, add=T)
+  plot(template.pols.m, add=T)
 }
 
 # x <- 100
 # loop through each polygon, load intersecting part of overall raster
 r.tiles <- 
   # 1:50 %>%
-  1:length(template.pols) %>%
+  1:length(template.pols.m) %>%
   map(.f = function(x) {
     print(x)
     dm <- gridRes / res(r)
@@ -86,6 +92,14 @@ r.tiles <-
     }
   }) %>% 
   compact()
+
+# 35/50
+length(r.tiles)
+plot(rast(r.tiles[[100]]))
+p <- as.points(rast(r.tiles[[100]]))
+# 
+mins <- (length(p) * 0.7) / 60 # mins
+mins / 60
 
 ##•┣ prepare grass env ----
 grassloc <- glue('{sysTmpDir}/grassdb')
@@ -140,12 +154,16 @@ viewpointAnalysis <- function(x) {
   output_loc <- file.path(wd,'outputs')
   output_it <- x
   
+  print('node preparation complete')
+  diff <- Sys.time() -  st
+  print(diff)
   # execute python script
+  st <- Sys.time()
   print('running python script...')
   system2('grass',
           paste(grassMapset,
                 '--exec',
-                file.path(wd,'python','viz.py'),
+                file.path(wd,'python','viz_viewshed.py'),
                 dem,
                 viewdist,
                 viewobserver,
@@ -156,10 +174,11 @@ viewpointAnalysis <- function(x) {
                 ),
           stderr = paste0(getwd(),'/logs/viz_out_',output_it,'.txt')
           )
+  print('viewshed analysis complete')
   diff <- Sys.time() -  st
   print(diff)
   sink()
-  return(print(glue('node with job {x} completed in.')))
+  return(print(glue('node with job {x} finished')))
 }
 
 varsToExport <- c('r.tiles','grassloc','sysTmpDir','wd','sharedDemName')
@@ -186,8 +205,8 @@ if (env == 'KATHLEEN') {
   snow::clusterExport(cl, varsToExport)
   print(Sys.time())
   print('running analysis...')
-  # datOut <- snow::clusterApply(cl, 1:length(r.tiles), viewpointAnalysis)
-  datOut <- snow::clusterApplyLB(cl, 1:50, viewpointAnalysis)
+  datOut <- snow::clusterApply(cl, 1:length(r.tiles), viewpointAnalysis)
+  # datOut <- snow::clusterApplyLB(cl, 1:50, viewpointAnalysis)
 }
 
 print(Sys.time())
