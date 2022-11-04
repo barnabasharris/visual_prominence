@@ -27,5 +27,5 @@ echo "done!"
 
 # Run our MPI job. GERun is our wrapper for mpirun, which launches MPI jobs  
 echo "running gerun..."
-gerun /home/tcrnbgh/Scratch/visual_prominence/RMPISNOW_bgh < /home/tcrnbgh/Scratch/visual_prominence/rscript/analysis.R
+gerun /home/tcrnbgh/RMPISNOW_bgh < /home/tcrnbgh/Scratch/visual_prominence/rscript/analysis.R
 echo "done!"
