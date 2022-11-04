@@ -29,6 +29,7 @@ print(tempdir())
 
 dir.create('logs')
 dir.create('outputs')
+system(glue('chmod +x {wd}/python/viz.py'))
 
 # vars
 # sink('analysis_hpc_sinkout.txt')

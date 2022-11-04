@@ -10,7 +10,7 @@ export TMPDIR="/home/tcrnbgh/Scratch/tmp"
 
 echo "TMPDIR=/home/tcrnbgh/Scratch/tmp" > /home/tcrnbgh/Scratch/visual_prominence/.Renviron
 cp /home/tcrnbgh/Scratch/visual_prominence/.Renviron /home/tcrnbgh/.Renviron
-chmod +x /home/tcrnbgh/Scratch/visual_prominence/python/viz.py
+
 
 
 
