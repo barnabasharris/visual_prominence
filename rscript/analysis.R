@@ -35,6 +35,9 @@ if (dir.exists('outputs')) {
   unlink('outputs',recursive=T)
 }
 
+dir.create('logs')
+dir.create('outputs')
+
 system(glue('chmod +x {wd}/python/viz.py'))
 
 # pre-process date for analysis -----
