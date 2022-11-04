@@ -56,7 +56,9 @@ if (env == 'LOCAL') {
 
 # x <- 100
 # loop through each polygon, load intersecting part of overall raster
-r.tiles <- 1:length(template.pols) %>% 
+r.tiles <- 
+  # 1:50 %>% 
+  1:length(template.pols) %>%
   map(.f = function(x) {
     print(x)
     dm <- gridRes / res(r)
@@ -67,7 +69,8 @@ r.tiles <- 1:length(template.pols) %>%
     names(exNum) <- NULL
 
     vals <- vapour::vapour_warp_raster(demFile, extent = exNum, dimension = dm, projection = crsObj)
-    r <- setValues(rast(extent=exSpat, nrows = dm[2], ncols = dm[1], crs = crsObj), vals[[1]])
+    # can't set CRS here, as for some reason Kathleen throws an error when unwrapping the rast
+    r <- setValues(rast(extent=exSpat, nrows = dm[2], ncols = dm[1]), vals[[1]])
     
     if (all(is.nan(r[]))) {
       return(NULL)
@@ -76,6 +79,7 @@ r.tiles <- 1:length(template.pols) %>%
     }
   }) %>% 
   compact()
+
 
 ##•┣ prepare grass env ----
 grassloc <- glue('{sysTmpDir}/grassdb')
@@ -100,6 +104,7 @@ viewpointAnalysis <- function(x) {
   setwd(wd)
   # extract tile
   r <- rast(r.tiles[[x]])
+  crs(r) <- 'EPSG:27700'
   
   # make into points
   r.points <- as.points(r)
