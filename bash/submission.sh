@@ -12,7 +12,7 @@
 #$ -N visual_prominence
 
 # Select the MPI parallel environment with 32 processes
-#$ -pe mpi 30
+#$ -pe mpi 50
 
 # Load R/GRASS environment
 echo "running init.sh script..."
