@@ -57,6 +57,7 @@ def calcViz(dem, viewdist, viewobserver, viewtarget, pointsloc, output_loc, outp
     ## Reiterate through viewpoints
     my_print('iterating through points...')
     for point in pointlist:
+        my_print('point number ' + point + '...')
         gscript.run_command('v.extract',
                             input='points',
                             where='cat=' + """'""" + point + """'""",

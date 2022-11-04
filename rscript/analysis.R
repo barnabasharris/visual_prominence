@@ -103,14 +103,15 @@ system(glue('grass {grassPermanent} --exec r.in.gdal {file.path(here(),demFile)}
 
 ##•┣ define function ----
 # x <- 1
-
+# x <- 10
 viewpointAnalysis <- function(x) {
+  st <- Sys.time()
   library(terra)
   library(glue)
   setwd(wd)
   # extract tile
   
-  # sink(glue('logs/analysis_sinkout_{x}.txt'))
+  sink(glue('logs/analysis_sinkout_{x}.txt'))
   print('extracting raster tile...')
   r <- rast(r.tiles[[x]])
   crs(r) <- 'EPSG:27700'
@@ -122,6 +123,7 @@ viewpointAnalysis <- function(x) {
   # write points to disk, ready for grass import
   print('writing points to disk...')
   pointsLoc <- glue('{sysTmpDir}/viewpoints_{x}.gpkg')
+  if (file.exists(pointsLoc)) file.remove(pointsLoc)
   writeVector(r.points,pointsLoc,overwrite=T)
   
   # create grass mapset for node
@@ -154,8 +156,10 @@ viewpointAnalysis <- function(x) {
                 ),
           stderr = paste0(getwd(),'/logs/viz_out_',output_it,'.txt')
           )
-  # sink()
-  return(print('complete'))
+  diff <- Sys.time() -  st
+  print(diff)
+  sink()
+  return(print(glue('node with job {x} completed in.')))
 }
 
 varsToExport <- c('r.tiles','grassloc','sysTmpDir','wd','sharedDemName')
@@ -178,16 +182,18 @@ if (env == 'KATHLEEN') {
   
   # Display info about each process in the cluster
   print(clusterCall(cl, function() Sys.info()))
-  
-  print('running analysis...')
+  print('exporting vars to nodes...')
   snow::clusterExport(cl, varsToExport)
+  print(Sys.time())
+  print('running analysis...')
   # datOut <- snow::clusterApply(cl, 1:length(r.tiles), viewpointAnalysis)
   datOut <- snow::clusterApply(cl, 1:50, viewpointAnalysis)
 }
 
+print(Sys.time())
 print('done!')
 # Clean up the cluster and release the relevant resources.
 stopCluster(cl)
-sink()
+# sink()
 mpi.quit()
 
