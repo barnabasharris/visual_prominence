@@ -87,7 +87,6 @@ r.tiles <-
   }) %>% 
   compact()
 
-
 ##•┣ prepare grass env ----
 grassloc <- glue('{sysTmpDir}/grassdb')
 grassPermanent <- file.path(grassloc,'PERMANENT')
@@ -180,7 +179,7 @@ if (env == 'KATHLEEN') {
   # Display info about each process in the cluster
   print(clusterCall(cl, function() Sys.info()))
   
-  print('running interpolations...')
+  print('running analysis...')
   snow::clusterExport(cl, varsToExport)
   # datOut <- snow::clusterApply(cl, 1:length(r.tiles), viewpointAnalysis)
   datOut <- snow::clusterApply(cl, 1:50, viewpointAnalysis)
