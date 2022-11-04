@@ -187,13 +187,16 @@ if (env == 'KATHLEEN') {
   print(Sys.time())
   print('running analysis...')
   # datOut <- snow::clusterApply(cl, 1:length(r.tiles), viewpointAnalysis)
-  datOut <- snow::clusterApply(cl, 1:50, viewpointAnalysis)
+  datOut <- snow::clusterApplyLB(cl, 1:50, viewpointAnalysis)
 }
 
 print(Sys.time())
 print('done!')
 # Clean up the cluster and release the relevant resources.
 stopCluster(cl)
-# sink()
 mpi.quit()
+
+
+
+
 
