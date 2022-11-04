@@ -37,3 +37,9 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# big data
+visual_prominence.Rproj
+bigdata/
+outputs/
+logs/

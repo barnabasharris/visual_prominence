@@ -27,12 +27,16 @@ print(sysTmpDir)
 print('main R tempdir is...')
 print(tempdir())
 
+dir.create('logs')
+dir.create('outputs')
+
 # vars
 # sink('analysis_hpc_sinkout.txt')
 
 # pre-process date for analysis -----
 gridRes <- 50000
 demFile <- 'bigdata/britain50m_int_rst.tif'
+
 # load terrain raster
 r <- terra::rast(demFile)
 # copy to template
@@ -60,7 +64,7 @@ r.tiles <- 1:length(template.pols) %>%
     exSpat <- ext(p)
     exNum <- c(exSpat$xmin,exSpat$xmax,exSpat$ymin,exSpat$ymax)
     names(exNum) <- NULL
-    vals <- vapour::vapour_warp_raster('bigdata/britain50m.tif', extent = exNum, dimension = dm, projection = crsObj)
+    vals <- vapour::vapour_warp_raster(demFile, extent = exNum, dimension = dm, projection = crsObj)
     r <- setValues(rast(extent=exSpat, nrows = dm[2], ncols = dm[1], crs = crsObj), vals[[1]])
     
     if (all(is.nan(r[]))) {
