@@ -27,12 +27,15 @@ print(sysTmpDir)
 print('main R tempdir is...')
 print(tempdir())
 
-dir.create('logs')
-dir.create('outputs')
-system(glue('chmod +x {wd}/python/viz.py'))
+if (dir.exists('logs')) {
+  unlink('logs',recursive=T)
+}
 
-# vars
-# sink('analysis_hpc_sinkout.txt')
+if (dir.exists('outputs')) {
+  unlink('outputs',recursive=T)
+}
+
+system(glue('chmod +x {wd}/python/viz.py'))
 
 # pre-process date for analysis -----
 gridRes <- 50000
@@ -104,6 +107,8 @@ viewpointAnalysis <- function(x) {
   library(glue)
   setwd(wd)
   # extract tile
+  
+  sink(glue('logs/analysis_sinkout_{x}.txt'))
   r <- rast(r.tiles[[x]])
   crs(r) <- 'EPSG:27700'
   
@@ -142,7 +147,7 @@ viewpointAnalysis <- function(x) {
                 ),
           stderr = paste0(getwd(),'/logs/viz_out_',output_it,'.txt')
           )
-
+  sink()
   return(print('complete'))
 }
 
