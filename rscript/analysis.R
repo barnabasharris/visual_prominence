@@ -174,7 +174,8 @@ if (env == 'KATHLEEN') {
   
   print('running interpolations...')
   snow::clusterExport(cl, varsToExport)
-  datOut <- snow::clusterApply(cl, 1:length(r.tiles), viewpointAnalysis)
+  # datOut <- snow::clusterApply(cl, 1:length(r.tiles), viewpointAnalysis)
+  datOut <- snow::clusterApply(cl, 1:30, viewpointAnalysis)
 }
 
 print('done!')
