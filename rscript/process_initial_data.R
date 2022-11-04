@@ -68,5 +68,10 @@ options(future.globals.maxSize = 1572864000)
     
   })
 
-
+# adjust resolution 
+e <- terra::ext(r)
+ne <- ext(c(ceiling(e$xmin), floor(e$xmax), ceiling(e$ymin), floor(e$ymax)))
+nr <- rast(extent=ne, resolution=50)
+r.aligned <- resample(r, nr)
+writeRaster(r.aligned, 'bigdata/britain50m_int_rst_aligned.tif')
 

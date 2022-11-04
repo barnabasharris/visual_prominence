@@ -2,7 +2,7 @@
 library(terra)
 library(here)
 library(purrr)
-library(Rmpi)
+# library(Rmpi)
 library(snow)
 library(vapour)
 library(glue)
@@ -11,7 +11,7 @@ if (here() == "/media/mal/git/visual_prominence") {
   env <- 'LOCAL'
 }
 
-if (here() == "/lustre/home/tcrnbgh/visual_prominence") {
+if (here() == "/lustre/scratch/tcrnbgh/visual_prominence") {
   env <- 'KATHLEEN'
 }
 
@@ -35,7 +35,7 @@ dir.create('outputs')
 
 # pre-process date for analysis -----
 gridRes <- 50000
-demFile <- 'bigdata/britain50m_int_rst.tif'
+demFile <- 'bigdata/britain50m_int_rst_aligned.tif'
 
 # load terrain raster
 r <- terra::rast(demFile)
@@ -54,6 +54,7 @@ if (env == 'LOCAL') {
   plot(template.pols, add=T)
 }
 
+# x <- 100
 # loop through each polygon, load intersecting part of overall raster
 r.tiles <- 1:length(template.pols) %>% 
   map(.f = function(x) {
@@ -64,6 +65,7 @@ r.tiles <- 1:length(template.pols) %>%
     exSpat <- ext(p)
     exNum <- c(exSpat$xmin,exSpat$xmax,exSpat$ymin,exSpat$ymax)
     names(exNum) <- NULL
+
     vals <- vapour::vapour_warp_raster(demFile, extent = exNum, dimension = dm, projection = crsObj)
     r <- setValues(rast(extent=exSpat, nrows = dm[2], ncols = dm[1], crs = crsObj), vals[[1]])
     
@@ -83,8 +85,9 @@ grassPermanent <- file.path(grassloc,'PERMANENT')
 if (dir.exists(grassloc)) unlink(grassloc,recursive = T)
 system(glue('grass -c EPSG:27700 {grassloc} -e'))
 
+sharedDemName <- 'dem'
 # add raster to PERMANENT mapset for shared access across nodes
-system(glue('grass {grassPermanent} --exec r.in.gdal {file.path(here(),demFile)} output=dem'))
+system(glue('grass {grassPermanent} --exec r.in.gdal {file.path(here(),demFile)} output={sharedDemName}'))
 
 # multi-thread analysis ----
 
@@ -110,7 +113,7 @@ viewpointAnalysis <- function(x) {
   if (dir.exists(grassMapset)) unlink(grassMapset,recursive = T)
   system(glue('grass -c {grassloc}/mapset_{x} -e'))
   
-  dem <- 'dem'
+  dem <- sharedDemName
   viewdist <- 10000
   viewobserver <-  1.75
   viewtarget <- 1.75
@@ -137,7 +140,7 @@ viewpointAnalysis <- function(x) {
   return(print('complete'))
 }
 
-varsToExport <- c('r.tiles','grassloc','sysTmpDir','wd')
+varsToExport <- c('r.tiles','grassloc','sysTmpDir','wd','sharedDemName')
 
 ##•┣ {parallel} version for testing ----
 if (env == 'LOCAL') {
