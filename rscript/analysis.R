@@ -64,7 +64,7 @@ if (env == 'LOCAL') {
 # x <- 100
 # loop through each polygon, load intersecting part of overall raster
 r.tiles <- 
-  # 1:50 %>% 
+  # 1:50 %>%
   1:length(template.pols) %>%
   map(.f = function(x) {
     print(x)
@@ -111,18 +111,22 @@ viewpointAnalysis <- function(x) {
   setwd(wd)
   # extract tile
   
-  sink(glue('logs/analysis_sinkout_{x}.txt'))
+  # sink(glue('logs/analysis_sinkout_{x}.txt'))
+  print('extracting raster tile...')
   r <- rast(r.tiles[[x]])
   crs(r) <- 'EPSG:27700'
   
   # make into points
+  print('converting to points...')
   r.points <- as.points(r)
   
   # write points to disk, ready for grass import
+  print('writing points to disk...')
   pointsLoc <- glue('{sysTmpDir}/viewpoints_{x}.gpkg')
   writeVector(r.points,pointsLoc,overwrite=T)
   
   # create grass mapset for node
+  print('creating mapset...')
   grassMapset <- glue('{grassloc}/mapset_{x}')
   if (dir.exists(grassMapset)) unlink(grassMapset,recursive = T)
   system(glue('grass -c {grassloc}/mapset_{x} -e'))
@@ -136,6 +140,7 @@ viewpointAnalysis <- function(x) {
   output_it <- x
   
   # execute python script
+  print('running python script...')
   system2('grass',
           paste(grassMapset,
                 '--exec',
@@ -150,7 +155,7 @@ viewpointAnalysis <- function(x) {
                 ),
           stderr = paste0(getwd(),'/logs/viz_out_',output_it,'.txt')
           )
-  sink()
+  # sink()
   return(print('complete'))
 }
 
@@ -178,7 +183,7 @@ if (env == 'KATHLEEN') {
   print('running interpolations...')
   snow::clusterExport(cl, varsToExport)
   # datOut <- snow::clusterApply(cl, 1:length(r.tiles), viewpointAnalysis)
-  datOut <- snow::clusterApply(cl, 1:30, viewpointAnalysis)
+  datOut <- snow::clusterApply(cl, 1:50, viewpointAnalysis)
 }
 
 print('done!')
