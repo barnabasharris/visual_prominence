@@ -3,7 +3,7 @@
 #  R MPI parallel job
 
 # Request ten minutes of wallclock time (format hours:minutes:seconds).
-#$ -l h_rt=48:00:0
+#$ -l h_rt=20:00:0
 
 # Request 1 gigabyte of RAM per process.
 #$ -l mem=300M
@@ -12,7 +12,7 @@
 #$ -N visual_prominence
 
 # Select the MPI parallel environment with 32 processes
-#$ -pe mpi 235
+#$ -pe mpi 222
 
 # Load R/GRASS environment
 echo "running init.sh script..."
