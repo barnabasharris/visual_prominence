@@ -41,7 +41,7 @@ dir.create('outputs')
 system(glue('chmod -R +x {wd}/python/'))
 
 # pre-process date for analysis -----
-gridRes <- 22500
+gridRes <- 15000
 demFile <- 'bigdata/britain50m_int_rst_aligned.tif'
 
 # load terrain raster
@@ -95,7 +95,7 @@ r.tiles <-
 
 # 35/50
 length(r.tiles)
-plot(rast(r.tiles[[100]]))
+plot(rast(r.tiles[[120]]))
 p <- as.points(rast(r.tiles[[100]]))
 # 
 mins <- (length(p) * 0.7) / 60 # mins
@@ -205,7 +205,7 @@ if (env == 'KATHLEEN') {
   snow::clusterExport(cl, varsToExport)
   print(Sys.time())
   print('running analysis...')
-  datOut <- snow::clusterApply(cl, 1:length(r.tiles), viewpointAnalysis)
+  datOut <- snow::clusterApply(cl, 1:222, viewpointAnalysis)
   # datOut <- snow::clusterApplyLB(cl, 1:50, viewpointAnalysis)
 }
 
