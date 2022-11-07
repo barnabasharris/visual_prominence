@@ -62,9 +62,9 @@ def calcViz(dem, viewdist, viewobserver, viewtarget, pointsloc, output_loc, outp
                        overwrite=True)
     
     # DEBUG: take a random sample of points
-    # my_print('sampling 50 points from data...')
-    # smp = random.sample(range(0,len(pointlist)),50)                 
-    # pointlist = [pointlist[i] for i in smp]
+    my_print('sampling 50 points from data...')
+    smp = random.sample(range(0,len(pointlist)),50)
+    pointlist = [pointlist[i] for i in smp]
     
     ## Reiterate through viewpoints
     my_print('iterating through points...')

@@ -164,7 +164,7 @@ viewpointAnalysis <- function(x) {
   system2('grass',
           paste(grassMapset,
                 '--exec',
-                file.path(wd,'python','viz_viewshed.py'),
+                file.path(wd,'python','viz_viewshed_debug.py'),
                 dem,
                 viewdist,
                 viewobserver,
@@ -207,7 +207,7 @@ if (env == 'KATHLEEN') {
   snow::clusterExport(cl, varsToExport)
   print(Sys.time())
   print('running analysis...')
-  datOut <- snow::clusterApply(cl, 1:222, viewpointAnalysis)
+  datOut <- snow::clusterApply(cl, 1:20, viewpointAnalysis)
   # datOut <- snow::clusterApplyLB(cl, 1:50, viewpointAnalysis)
 }
 
@@ -217,7 +217,6 @@ print('done!')
 stopCluster(cl)
 mpi.quit()
 
-length(1:222)
 
 
 
