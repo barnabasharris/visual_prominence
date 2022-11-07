@@ -171,6 +171,8 @@ viewpointAnalysis <- function(x) {
   print('viewshed analysis complete')
   diff <- Sys.time() -  st
   print(diff)
+  # remove the grass mapset
+  unlink(grassMapset,recursive = T)
   sink()
   return(print(glue('node with job {x} finished')))
 }
@@ -203,6 +205,8 @@ if (env == 'KATHLEEN') {
   # datOut <- snow::clusterApplyLB(cl, 1:50, viewpointAnalysis)
 }
 
+# remove grass location
+unlink(grassloc,recursive = T)
 print(Sys.time())
 print('done!')
 # Clean up the cluster and release the relevant resources.
