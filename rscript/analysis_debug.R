@@ -70,8 +70,8 @@ if (env == 'LOCAL') {
 # x <- 100
 # loop through each polygon, load intersecting part of overall raster
 r.tiles <- 
-  # 1:50 %>%
-  1:length(template.pols.m) %>%
+  1:50 %>%
+  # 1:length(template.pols.m) %>%
   map(.f = function(x) {
     print(x)
     dm <- gridRes / res(r)
@@ -207,7 +207,7 @@ if (env == 'KATHLEEN') {
   snow::clusterExport(cl, varsToExport)
   print(Sys.time())
   print('running analysis...')
-  datOut <- snow::clusterApply(cl, 1:20, viewpointAnalysis)
+  datOut <- snow::clusterApply(cl, 1:50, viewpointAnalysis)
   # datOut <- snow::clusterApplyLB(cl, 1:50, viewpointAnalysis)
 }
 
