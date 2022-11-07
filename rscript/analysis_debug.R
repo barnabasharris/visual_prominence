@@ -41,7 +41,7 @@ dir.create('outputs')
 system(glue('chmod -R +x {wd}/python/'))
 
 # pre-process date for analysis -----
-gridRes <- 15000
+gridRes <- 10000
 demFile <- 'bigdata/britain50m_int_rst_aligned.tif'
 
 # load terrain raster
@@ -50,6 +50,9 @@ r <- terra::rast(demFile)
 r.bin <- r
 r.bin[!is.nan(r.bin)] <- 1
 r.bin.pol <- as.polygons(r.bin)
+# how many vs to compute?
+r.bin[is.nan(r.bin)] <- 0
+global(r.bin, 'sum')
 # copy original r to template
 template <- terra::rast(r)
 # set new res of template
@@ -70,8 +73,7 @@ if (env == 'LOCAL') {
 # x <- 100
 # loop through each polygon, load intersecting part of overall raster
 r.tiles <- 
-  1:50 %>%
-  # 1:length(template.pols.m) %>%
+  1:length(template.pols.m) %>%
   map(.f = function(x) {
     print(x)
     dm <- gridRes / res(r)
@@ -92,6 +94,20 @@ r.tiles <-
     }
   }) %>% 
   compact()
+
+
+
+# visualize
+if (env == 'LOCAL') {
+  length(r.tiles)
+  plot(rast(r.tiles[[120]]))
+  r.p <- as.points(rast(r.tiles[[120]]))
+  secs <- nrow(r.p) * 3
+  mins <- secs / 60
+  hours <- mins / 60
+  912/4
+  # 4 batches of 228 threads running for 33 hours 
+}
 
 ##•┣ prepare grass env ----
 grassloc <- glue('{sysTmpDir}/grassdb')

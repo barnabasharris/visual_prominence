@@ -1,4 +1,18 @@
 
+
+
+timeStamps <- read.delim('logs/viz_out_o3.txt') %>% 
+  as.data.frame() %>% 
+  .[10:nrow(.),] %>% 
+  .[seq(1,length(.),by=2)] %>%
+  lubridate::as_datetime()
+
+1:length(timeStamps) %>% map(~difftime(timeStamps[.x+1],timeStamps[.x])) %>% 
+  as.numeric() %>% 
+  mean(.,na.rm=T)
+
+  
+
 ln <- stringr::str_split("2022-11-04 16:24:25.555726
 point number 622393...
 2022-11-04 16:24:37.999578
