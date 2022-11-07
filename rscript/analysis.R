@@ -42,7 +42,7 @@ system(glue('chmod -R +x {wd}/python/'))
 
 # pre-process date for analysis -----
 gridRes <- 10000
-demFile <- 'bigdata/britain50m_int_rst_aligned.tif'
+demFile <- 'bigdata/os_50m_masked.tif'
 
 # load terrain raster
 r <- terra::rast(demFile)
@@ -201,7 +201,7 @@ if (env == 'KATHLEEN') {
   snow::clusterExport(cl, varsToExport)
   print(Sys.time())
   print('running analysis...')
-  datOut <- snow::clusterApply(cl, 1:228, viewpointAnalysis)
+  datOut <- snow::clusterApply(cl, 1:230, viewpointAnalysis)
 }
 
 # remove grass location

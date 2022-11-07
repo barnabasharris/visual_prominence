@@ -42,7 +42,7 @@ system(glue('chmod -R +x {wd}/python/'))
 
 # pre-process date for analysis -----
 gridRes <- 10000
-demFile <- 'bigdata/britain50m_int_rst_aligned.tif'
+demFile <- 'bigdata/os_50m_masked.tif'
 
 # load terrain raster
 r <- terra::rast(demFile)
@@ -95,18 +95,16 @@ r.tiles <-
   }) %>% 
   compact()
 
-
-
-# visualize
+# calculate threads / batches 
 if (env == 'LOCAL') {
   length(r.tiles)
-  plot(rast(r.tiles[[120]]))
-  r.p <- as.points(rast(r.tiles[[120]]))
-  secs <- nrow(r.p) * 3
+  plot(rast(r.tiles[[122]]))
+  r.p <- as.points(rast(r.tiles[[122]]))
+  secs <- nrow(r.p) * 3 # avg time per viewshed in seconds
   mins <- secs / 60
   hours <- mins / 60
-  912/4
-  # 4 batches of 228 threads running for 33 hours 
+  length(r.tiles)/4
+  # 4 batches of 230 threads running for 34 hours 
 }
 
 ##•┣ prepare grass env ----

@@ -75,3 +75,22 @@ nr <- rast(extent=ne, resolution=50)
 r.aligned <- resample(r, nr)
 writeRaster(r.aligned, 'bigdata/britain50m_int_rst_aligned.tif')
 
+
+# OS data
+
+ascFiles <- 
+  file.path('/media/mal/os_terrain-50-dtm',
+            list.files('/media/mal/os_terrain-50-dtm',recursive = T,pattern='*asc$'))
+gb <- vect('/media/mal/os_gb-outlines/greatbritain.shp')
+
+osBritain <- terra::vrt(ascFiles)
+osBritain.masked <- mask(osBritain,gb)
+osBritain[osBritain<0] <- NA
+writeRaster(osBritain.masked, '/media/mal/git/visual_prominence/bigdata/os_50m_masked.tif')
+
+
+
+
+
+
+
