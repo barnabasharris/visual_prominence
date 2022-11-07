@@ -93,14 +93,6 @@ r.tiles <-
   }) %>% 
   compact()
 
-# 35/50
-length(r.tiles)
-plot(rast(r.tiles[[120]]))
-p <- as.points(rast(r.tiles[[100]]))
-# 
-mins <- (length(p) * 0.7) / 60 # mins
-mins / 60
-
 ##•┣ prepare grass env ----
 grassloc <- glue('{sysTmpDir}/grassdb')
 grassPermanent <- file.path(grassloc,'PERMANENT')
@@ -216,8 +208,6 @@ print('done!')
 # Clean up the cluster and release the relevant resources.
 stopCluster(cl)
 mpi.quit()
-
-length(1:222)
 
 
 
