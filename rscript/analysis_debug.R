@@ -17,8 +17,26 @@ if (here() == "/lustre/scratch/tcrnbgh/visual_prominence") {
 
 wd <- here()
 
-if (env == 'KATHLEEN') Sys.setenv(TMPDIR='/home/tcrnbgh/Scratch/tmp')
-if (env == 'LOCAL') Sys.setenv(TMPDIR='/tmp')
+if (dir.exists('tmp')) {
+  unlink('tmp',recursive=T)
+}
+
+dir.create('tmp')
+
+if (dir.exists('outputs')) {
+  unlink('outputs',recursive=T)
+}
+
+dir.create('outputs')
+
+if (dir.exists('logs')) {
+  unlink('logs',recursive=T)
+}
+
+dir.create('logs')
+
+# set system tmp
+Sys.setenv(TMPDIR=file.path(here(),'tmp'))
 
 print('system tempdir is...')
 sysTmpDir <- Sys.getenv("TMPDIR")
@@ -27,17 +45,7 @@ print(sysTmpDir)
 print('main R tempdir is...')
 print(tempdir())
 
-if (dir.exists('logs')) {
-  unlink('logs',recursive=T)
-}
-
-if (dir.exists('outputs')) {
-  unlink('outputs',recursive=T)
-}
-
-dir.create('logs')
-dir.create('outputs')
-
+# set permissions for python script to allow executable
 system(glue('chmod -R +x {wd}/python/'))
 
 # pre-process date for analysis -----
@@ -95,6 +103,13 @@ r.tiles <-
   }) %>% 
   compact()
 
+if (env == 'LOCAL') {
+  r.tiles.length <- r.tiles %>% 
+    map_int(.f = function(x) {
+      length(as.points(rast(x)))
+    })
+}
+
 # calculate threads / batches 
 if (env == 'LOCAL') {
   length(r.tiles)
@@ -106,6 +121,25 @@ if (env == 'LOCAL') {
   length(r.tiles)/4
   # 4 batches of 230 threads running for 34 hours 
 }
+
+# work out speed
+if (env == 'LOCAL') {
+  r <- rast(r.tiles[[50]])
+  plot(r)
+  200*200
+  p.geom <- terra::geom(as.points(rast(r.tiles[[24]])))
+  
+  p.geom.coords <- 1:nrow(p.geom) %>% 
+    map_chr(.f = function(x) {
+      paste0(p.geom[x,c('x','y')],collapse='|')
+    })
+  
+  which(p.geom.coords == '322075|998025') / nrow(p.geom)
+  st <- lubridate::as_datetime('2022-11-09 14:18:51.726620')
+  now <- lubridate::as_datetime('2022-11-10 10:12:00.851957')
+  dur <- difftime(now, st, units='secs') / which(p.geom.coords == '322075|998025')
+}
+
 
 ##•┣ prepare grass env ----
 grassloc <- glue('{sysTmpDir}/grassdb')
@@ -124,14 +158,16 @@ system(glue('grass {grassPermanent} --exec r.in.gdal {file.path(here(),demFile)}
 ##•┣ define function ----
 # x <- 1
 # x <- 221
-viewpointAnalysis <- function(x) {
+viewpointAnalysis <- function(x, cva=F) {
   st <- Sys.time()
   library(terra)
   library(glue)
   setwd(wd)
   # extract tile
+  if (cva) {
+    sink(glue('logs/analysis_cva_sinkout_{x}.txt'))
+  } else sink(glue('logs/analysis_sinkout_{x}.txt'))
   
-  sink(glue('logs/analysis_sinkout_{x}.txt'))
   print('extracting raster tile...')
   r <- rast(r.tiles[[x]])
   crs(r) <- 'EPSG:27700'
@@ -166,11 +202,20 @@ viewpointAnalysis <- function(x) {
   print(diff)
   # execute python script
   st <- Sys.time()
-  print('running python script...')
+  # pick function
+  if (cva) {
+    pyLoc = file.path(wd,'python','viz_viewshed_cva_debug.py')
+    logStem = 'viz_out_cva'
+  } else {
+    pyLoc = file.path(wd,'python','viz_viewshed_debug.py')
+    logStem = 'viz_out'
+  }
+  
+  print(paste0('running python script at...',pyLoc))
   system2('grass',
           paste(grassMapset,
                 '--exec',
-                file.path(wd,'python','viz_viewshed_debug.py'),
+                pyLoc,
                 dem,
                 viewdist,
                 viewobserver,
@@ -179,14 +224,14 @@ viewpointAnalysis <- function(x) {
                 output_loc,
                 output_it
                 ),
-          stderr = paste0(getwd(),'/logs/viz_out_e',output_it,'.txt'),
-          stdout = paste0(getwd(),'/logs/viz_out_o',output_it,'.txt')
+          stderr = paste0(getwd(),'/logs/',logStem,'_e',output_it,'.txt'),
+          stdout = paste0(getwd(),'/logs/',logStem,'_o',output_it,'.txt')
           )
   print('viewshed analysis complete')
   diff <- Sys.time() -  st
   print(diff)
   # remove the grass mapset
-  unlink(grassMapset,recursive = T)
+  # unlink(grassMapset,recursive = T)
   sink()
   return(print(glue('node with job {x} finished')))
 }
@@ -198,8 +243,17 @@ if (env == 'LOCAL') {
   cl <- parallel::makePSOCKcluster(6)
   wd <- here::here()
   parallel::clusterExport(cl, varlist = varsToExport)
-  datOut <- parallel::clusterApply(cl, 1:6, viewpointAnalysis)
+  datOut <- parallel::clusterApply(cl, c(4,7,8,11,12,13), viewpointAnalysis, cva=T)
 }
+
+# map storage size in megabytes
+mapMB <- mean(c(7.8,7.6,6.8,5.0,8.8,5.3)) / 100
+# memory required for all max points per tiles (40000)
+40000 * mapMB
+# max scratch memory is 25000
+# max num of cores if all max points
+floor(250000 / (40000 * mapMB))
+
 
 
 ##•┣ {snow} version for kathleen ----
@@ -215,7 +269,7 @@ if (env == 'KATHLEEN') {
   snow::clusterExport(cl, varsToExport)
   print(Sys.time())
   print('running analysis...')
-  datOut <- snow::clusterApply(cl, 1:50, viewpointAnalysis)
+  datOut <- snow::clusterApply(cl, 1:50, viewpointAnalysis, cva=T)
   # datOut <- snow::clusterApplyLB(cl, 1:50, viewpointAnalysis)
 }
 

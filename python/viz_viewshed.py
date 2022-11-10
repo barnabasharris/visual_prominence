@@ -71,7 +71,7 @@ def calcViz(dem, viewdist, viewobserver, viewtarget, pointsloc, output_loc, outp
     
     for point in pointlist:
       #
-      my_print('point number ' + point + '...')
+      # my_print('point number ' + point + '...')
       
       gscript.run_command('r.viewshed',
                         input=dem,
@@ -88,7 +88,7 @@ def calcViz(dem, viewdist, viewobserver, viewtarget, pointsloc, output_loc, outp
                            overwrite=True)
       
       # export prominence map
-      my_print('exporting prominence map...')
+      # my_print('exporting prominence map...')
       
     gscript.run_command('r.out.gdal',
                     input='visual_prominence',

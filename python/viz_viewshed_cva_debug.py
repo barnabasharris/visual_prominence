@@ -43,59 +43,42 @@ def calcViz(dem, viewdist, viewobserver, viewtarget, pointsloc, output_loc, outp
     # apply buffer
     gscript.run_command('g.region',grow=growCells)
     
-    gscript.run_command('v.to.db',
-                      map='points',
-                      opt='coor',
-                      columns="x,y,z")
-    
-    ## Create a list with point coords
-    pointlistJoined = gscript.read_command('v.db.select',
-                                  map='points',
-                                  columns='x,y',
-                                  flags='c',
-                                  overwrite = True)
-    
-    pointlist = pointlistJoined.split('\n')[:-1]
-    
-    # set up empty visual prominence map
-    my_print('creating empty visual prominence map...')
-    gscript.raster.mapcalc('visual_prominence =' + dem + ' * 0',
-                       overwrite=True)
-    
     # DEBUG: take a random sample of points
+    ## Create a list with point coords
+    pointinfo = gscript.read_command('v.info',
+                                    map='points',
+                                    flags='t')
+    pointnum = pointinfo.split('\n')[1].split('points=')[1]
+    pointnum = int(pointnum)
+    
     smpnum = 1000
     my_print('sampling ' + str(smpnum) +' points from data...')
-    smp = random.sample(range(0,len(pointlist)),smpnum)
-    pointlist = [pointlist[i] for i in smp]
+    smp = random.sample(range(0,pointnum),smpnum)
+    smp_strings = [str(x) for x in smp]
+    sqlquery = 'cat IN (' + ','.join(smp_strings) +')'
     
-    ## Reiterate through viewpoints
-    my_print('iterating through ' + str(len(pointlist)) + ' points...')
+    my_print('extracting ' + str(smpnum) + ' points from data...')
+    gscript.run_command('v.extract',
+                    input='points',
+                    where=sqlquery,
+                    output='points_smp',
+                    overwrite = True)
     
-    for index, point in enumerate(pointlist):
-      #
-      my_print('point number ' + str(index) + '...')
-      outmap = 'point_view_' + str(index)
-      
-      gscript.run_command('r.viewshed',
+    my_print('running viewshed.cva...')
+    gscript.run_command('r.viewshed.cva',
                         input=dem,
-                        coordinates=point.split('|')[0] + ',' +  point.split('|')[1],
-                        output=outmap,
+                        vector='points_smp',
+                        output='visual_prominence',
                         max_distance=viewdist,
                         observer_elevation=viewobserver,
                         target_elevation=viewtarget,
                         memory='16000',
-                        overwrite = True,
-                        flags='b')
-      
-      gscript.raster.mapcalc('visual_prominence = visual_prominence + ' + outmap,
-                           overwrite=True)
-      
-      # export prominence map
-      my_print('exporting prominence map...')
-      
+                        overwrite = True)
+    
+    my_print('exporting map...')
     gscript.run_command('r.out.gdal',
                     input='visual_prominence',
-                    output = output_loc + '/visual_prominence_' + str(output_it) + '.tif',
+                    output = output_loc + '/visual_prominence_cva_' + str(output_it) + '.tif',
                     overwrite = True)
     my_print('complete...')
 

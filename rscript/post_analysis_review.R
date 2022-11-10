@@ -55,3 +55,20 @@ mean(as.numeric(diffs),na.rm=T)
 
 zoo::rollapply(timeStamps,FUN=difftime,width=2)
 timeStamps[1]-timeStamps[2]
+
+cvaTimes <- list.files('logs',pattern='analysis_cva',full.names = T) %>% 
+  map_chr(~tail(readLines(.x),n=1))
+
+vsTimes <- list.files('logs',pattern='analysis_sinkout*',full.names = T) %>% 
+  map_chr(~tail(readLines(.x),n=1))
+
+data.frame(cvaTimes,vsTimes)
+
+secsPerPoint <- (6.8 / 1000) * 60
+
+
+
+
+
+
+

@@ -70,7 +70,7 @@ if (env == 'LOCAL') {
 # x <- 100
 # loop through each polygon, load intersecting part of overall raster
 r.tiles <- 
-  # 1:50 %>%
+  # 1:500 %>%
   1:length(template.pols.m) %>%
   map(.f = function(x) {
     print(x)
