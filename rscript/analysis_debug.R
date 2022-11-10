@@ -6,6 +6,7 @@ library(purrr)
 library(snow)
 library(vapour)
 library(glue)
+library(stringr)
 
 if (str_detect(here(),'lustre')) {
   env <- 'KATHLEEN'
