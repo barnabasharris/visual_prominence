@@ -7,13 +7,9 @@ library(snow)
 library(vapour)
 library(glue)
 
-if (here() == "/media/mal/git/visual_prominence") {
-  env <- 'LOCAL'
-}
-
-if (here() == "/lustre/scratch/tcrnbgh/visual_prominence") {
+if (str_detect(here(),'lustre')) {
   env <- 'KATHLEEN'
-}
+} else env <- 'LOCAL'
 
 wd <- here()
 
