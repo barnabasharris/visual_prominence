@@ -1,4 +1,3 @@
-# !diagnostics off
 library(terra)
 library(here)
 library(purrr)
@@ -46,24 +45,27 @@ print(tempdir())
 system(glue('chmod -R +x {wd}/python/'))
 
 # pre-process date for analysis -----
-gridRes <- 10000
+gridRes <- 6500
 demFile <- 'bigdata/os_50m_masked.tif'
 
 # load terrain raster
-r <- terra::rast(demFile)
+r <- rast(demFile)
 # make polygon outline of non-na cells
 r.bin <- r
 r.bin[!is.nan(r.bin)] <- 1
 r.bin.pol <- as.polygons(r.bin)
-# how many vs to compute?
+
+# optional: how many vs to compute?
 r.bin[is.nan(r.bin)] <- 0
 global(r.bin, 'sum')
+
 # copy original r to template
 template <- terra::rast(r)
 # set new res of template
 res(template) <- gridRes
 # add arbitrary values
 values(template) <- 1:ncell(template)
+
 # convert to polygons
 template.pols <- as.polygons(template)
 # clip grid by outline
@@ -105,19 +107,23 @@ if (env == 'LOCAL') {
     map_int(.f = function(x) {
       length(as.points(rast(x)))
     })
+  
+  # split into reasonably sized chunks based on length
+  tileDf <- data.frame(tileID = 1:length(r.tiles.length),
+             tilePoints = r.tiles.length,
+             tilePointsGrp = cut(r.tiles.length,5,labels=LETTERS[5:1])
+  )
+  
+  tileDf.sum <- tileDf %>% 
+    dplyr::group_by(tilePointsGrp) %>% 
+    dplyr::summarise(maxPoints = max(tilePoints),
+                     grpNum = length(tilePoints)) %>% 
+    dplyr::mutate(runTime = ((maxPoints * 9.43) / 60) / 60 )
+  
+  sum(r.tiles.length < 16900)
 }
 
-# calculate threads / batches 
-if (env == 'LOCAL') {
-  length(r.tiles)
-  plot(rast(r.tiles[[122]]))
-  r.p <- as.points(rast(r.tiles[[122]]))
-  secs <- nrow(r.p) * 3 # avg time per viewshed in seconds
-  mins <- secs / 60
-  hours <- mins / 60
-  length(r.tiles)/4
-  # 4 batches of 230 threads running for 34 hours 
-}
+
 
 # work out speed
 if (env == 'LOCAL') {
@@ -134,8 +140,17 @@ if (env == 'LOCAL') {
   which(p.geom.coords == '322075|998025') / nrow(p.geom)
   st <- lubridate::as_datetime('2022-11-09 14:18:51.726620')
   now <- lubridate::as_datetime('2022-11-10 10:12:00.851957')
-  dur <- difftime(now, st, units='secs') / which(p.geom.coords == '322075|998025')
+  dur <- difftime(now, st, units='secs') / which(p.geom.coords == '322075|998025') # per point
+  
+  45 # hours (max run time)
+  (45 * 60) * 60  # seconds
+  162000 / 9.43 # max number of points process in a single job
+  17000 # 
+  sqrt(17000) # sqrt gives width height of window 
+  130 * 50 # multiply by 50m res for metres
+  
 }
+
 
 
 ##•┣ prepare grass env ----

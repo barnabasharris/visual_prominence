@@ -11,7 +11,7 @@ timeStamps <- read.delim('logs/viz_out_o3.txt') %>%
   as.numeric() %>% 
   mean(.,na.rm=T)
 
-  
+120*60  / 1000
 
 ln <- stringr::str_split("2022-11-04 16:24:25.555726
 point number 622393...
@@ -63,6 +63,13 @@ vsTimes <- list.files('logs',pattern='analysis_sinkout*',full.names = T) %>%
   map_chr(~tail(readLines(.x),n=1))
 
 data.frame(cvaTimes,vsTimes)
+
+((3 * 40000) / 60) / 60
+
+under20 <- r.tiles.length < 20000
+sum(under20)
+923-233
+
 
 secsPerPoint <- (6.8 / 1000) * 60
 
