@@ -254,8 +254,6 @@ mapMB <- mean(c(7.8,7.6,6.8,5.0,8.8,5.3)) / 100
 # max num of cores if all max points
 floor(250000 / (40000 * mapMB))
 
-
-
 ##•┣ {snow} version for kathleen ----
 if (env == 'KATHLEEN') {
   #!! if offSet = T the use pd$tiles$pol !!

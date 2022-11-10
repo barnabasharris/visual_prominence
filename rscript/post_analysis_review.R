@@ -66,7 +66,12 @@ data.frame(cvaTimes,vsTimes)
 
 secsPerPoint <- (6.8 / 1000) * 60
 
+outRas <- list.files('outputs',full.names = T) %>% 
+  map(rast)
 
+rMerged <- do.call('merge', outRas)
+plot(rMerged)
+writeRaster(rMerged,'merged.tif')
 
 
 
