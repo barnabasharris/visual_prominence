@@ -120,6 +120,10 @@ if (env == 'LOCAL') {
                        tilePointsGrp = cut(r.tiles.length,5,labels=LETTERS[5:1])
   )
   
+  m <- tileDf %>% 
+    dplyr::filter(tilePoints == 16900)
+  dput(m$tileID[1:50])
+  
   tileDf.sum <- tileDf %>% 
     dplyr::group_by(tilePointsGrp) %>% 
     dplyr::summarise(maxPoints = max(tilePoints),
@@ -253,7 +257,12 @@ if (env == 'KATHLEEN') {
   snow::clusterExport(cl, varsToExport)
   print(Sys.time())
   print('running analysis...')
-  datOut <- snow::clusterApply(cl, 1:50, viewpointAnalysis, cva=F)
+  datOut <- snow::clusterApply(cl, c(17L, 25L, 84L, 96L, 97L, 99L, 108L, 115L, 116L, 117L, 118L, 
+                                     119L, 120L, 121L, 122L, 123L, 128L, 133L, 136L, 138L, 139L, 140L, 
+                                     141L, 142L, 143L, 144L, 145L, 146L, 147L, 148L, 155L, 156L, 157L, 
+                                     163L, 164L, 165L, 166L, 167L, 168L, 169L, 170L, 171L, 172L, 173L, 
+                                     174L, 175L, 176L, 177L, 178L, 184L),
+                               viewpointAnalysis, cva=F)
   # datOut <- snow::clusterApplyLB(cl, 1:50, viewpointAnalysis)
 }
 

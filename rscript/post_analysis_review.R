@@ -113,6 +113,19 @@ if (env == 'LOCAL') {
   
 }
 
+x <- list.files('/media/mal/working_files/visual_prominence_outputs/logs',
+                pattern='viz_out_o*',full.names = T)[1]
+times <- list.files('/media/mal/working_files/visual_prominence_outputs/logs',
+           pattern='viz_out_o*',full.names = T) %>% 
+  .[stringr::str_detect(.,'viz_out_o')] %>% 
+  map_df(.f = function(x) {
+    ln <- readLines(x)
+    st <- lubridate::as_datetime(ln[8])
+    end <- lubridate::as_datetime(ln[10])
+    data.frame(st = st, end = end)
+  }) %>% 
+  dplyr::mutate(diff = difftime(end, st))
+
 
 
 
