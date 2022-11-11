@@ -59,7 +59,7 @@ def calcViz(dem, viewdist, viewobserver, viewtarget, pointsloc, output_loc, outp
     
     # set up empty visual prominence map
     my_print('creating empty visual prominence map...')
-    gscript.raster.mapcalc('visual_prominence =' + dem + ' * 0',
+    gscript.raster.mapcalc('visual_prominence = ' + dem + ' * 0',
                        overwrite=True)
     
     # DEBUG: take a random sample of points

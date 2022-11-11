@@ -1,3 +1,10 @@
+library(terra)
+library(here)
+library(purrr)
+library(snow)
+library(vapour)
+library(glue)
+library(stringr)
 
 
 
@@ -115,7 +122,7 @@ if (env == 'LOCAL') {
 
 x <- list.files('/media/mal/working_files/visual_prominence_outputs/logs',
                 pattern='viz_out_o*',full.names = T)[1]
-times <- list.files('/media/mal/working_files/visual_prominence_outputs/logs',
+timesRandom <- list.files('/media/mal/working_files/visual_prominence_outputs/logs',
            pattern='viz_out_o*',full.names = T) %>% 
   .[stringr::str_detect(.,'viz_out_o')] %>% 
   map_df(.f = function(x) {
@@ -124,7 +131,25 @@ times <- list.files('/media/mal/working_files/visual_prominence_outputs/logs',
     end <- lubridate::as_datetime(ln[10])
     data.frame(st = st, end = end)
   }) %>% 
-  dplyr::mutate(diff = difftime(end, st))
+  dplyr::mutate(diff = difftime(end, st), 
+                time_per_point = 
+                  round(lubridate::as.duration(diff / 100),2))
+
+
+timesMaxPoints <- list.files('/media/mal/working_files/visual_prominence_outputs/logs2/logs',
+                    pattern='viz_out_o*',full.names = T) %>% 
+  .[stringr::str_detect(.,'viz_out_o')] %>% 
+  map_df(.f = function(x) {
+    ln <- readLines(x)
+    st <- lubridate::as_datetime(ln[8])
+    end <- lubridate::as_datetime(ln[10])
+    data.frame(st = st, end = end)
+  }) %>% 
+  dplyr::mutate(diff = difftime(end, st), 
+                time_per_point = 
+                  round(lubridate::as.duration(diff / 100),2))
+
+
 
 
 

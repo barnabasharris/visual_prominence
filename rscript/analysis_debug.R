@@ -122,7 +122,7 @@ if (env == 'LOCAL') {
   
   m <- tileDf %>% 
     dplyr::filter(tilePoints == 16900)
-  dput(m$tileID[1:50])
+  dput(m$tileID[1:160])
   
   tileDf.sum <- tileDf %>% 
     dplyr::group_by(tilePointsGrp) %>% 
@@ -261,7 +261,17 @@ if (env == 'KATHLEEN') {
                                      119L, 120L, 121L, 122L, 123L, 128L, 133L, 136L, 138L, 139L, 140L, 
                                      141L, 142L, 143L, 144L, 145L, 146L, 147L, 148L, 155L, 156L, 157L, 
                                      163L, 164L, 165L, 166L, 167L, 168L, 169L, 170L, 171L, 172L, 173L, 
-                                     174L, 175L, 176L, 177L, 178L, 184L),
+                                     174L, 175L, 176L, 177L, 178L, 184L, 185L, 186L, 192L, 193L, 194L, 
+                                     195L, 196L, 197L, 198L, 199L, 200L, 201L, 202L, 203L, 204L, 205L, 
+                                     206L, 207L, 214L, 215L, 226L, 227L, 228L, 229L, 230L, 231L, 232L, 
+                                     233L, 234L, 235L, 236L, 237L, 242L, 244L, 245L, 251L, 252L, 255L, 
+                                     256L, 257L, 258L, 259L, 260L, 261L, 262L, 263L, 264L, 265L, 266L, 
+                                     271L, 279L, 280L, 281L, 282L, 283L, 284L, 285L, 286L, 287L, 288L, 
+                                     289L, 290L, 291L, 298L, 305L, 306L, 307L, 308L, 309L, 310L, 311L, 
+                                     312L, 313L, 314L, 315L, 316L, 317L, 330L, 331L, 332L, 333L, 334L, 
+                                     335L, 336L, 337L, 338L, 339L, 340L, 341L, 358L, 359L, 360L, 361L, 
+                                     362L, 363L, 364L, 365L, 366L, 386L, 387L, 388L, 389L, 390L, 393L, 
+                                     409L, 410L, 411L, 412L, 413L, 414L),
                                viewpointAnalysis, cva=F)
   # datOut <- snow::clusterApplyLB(cl, 1:50, viewpointAnalysis)
 }
