@@ -1,7 +1,6 @@
 library(terra)
 library(here)
 library(purrr)
-# library(Rmpi)
 library(snow)
 library(vapour)
 library(glue)
@@ -45,7 +44,7 @@ print(tempdir())
 system(glue('chmod -R +x {wd}/python/'))
 
 # pre-process date for analysis -----
-gridRes <- 6500
+gridRes <- 6500 # decided by maximum job length allowed by kathleen, see  below
 demFile <- 'bigdata/os_50m_masked.tif'
 
 # load terrain raster
@@ -102,62 +101,45 @@ r.tiles <-
   }) %>% 
   compact()
 
+
 if (env == 'LOCAL') {
   r.tiles.length <- r.tiles %>% 
     map_int(.f = function(x) {
       length(as.points(rast(x)))
     })
   
+  # assumptions for estimates
+  kathleenSpeed <- 9.43 # seconds per viewshed
+  agisSpeed <- 0.5 # seconds per viewshed
+  kathleenCores <- 250
+  agisCores <- 7
+  
   # split into reasonably sized chunks based on length
   tileDf <- data.frame(tileID = 1:length(r.tiles.length),
-             tilePoints = r.tiles.length,
-             tilePointsGrp = cut(r.tiles.length,5,labels=LETTERS[5:1])
+                       tilePoints = r.tiles.length,
+                       tilePointsGrp = cut(r.tiles.length,5,labels=LETTERS[5:1])
   )
   
   tileDf.sum <- tileDf %>% 
     dplyr::group_by(tilePointsGrp) %>% 
     dplyr::summarise(maxPoints = max(tilePoints),
                      grpNum = length(tilePoints)) %>% 
-    dplyr::mutate(runTime = ((maxPoints * 9.43) / 60) / 60 )
-  
-  sum(r.tiles.length < 16900)
-}
-
-
-
-# work out speed
-if (env == 'LOCAL') {
-  r <- rast(r.tiles[[50]])
-  plot(r)
-  200*200
-  p.geom <- terra::geom(as.points(rast(r.tiles[[24]])))
-  
-  p.geom.coords <- 1:nrow(p.geom) %>% 
-    map_chr(.f = function(x) {
-      paste0(p.geom[x,c('x','y')],collapse='|')
-    })
-  
-  which(p.geom.coords == '322075|998025') / nrow(p.geom)
-  st <- lubridate::as_datetime('2022-11-09 14:18:51.726620')
-  now <- lubridate::as_datetime('2022-11-10 10:12:00.851957')
-  dur <- difftime(now, st, units='secs') / which(p.geom.coords == '322075|998025') # per point
-  
-  45 # hours (max run time)
-  (45 * 60) * 60  # seconds
-  162000 / 9.43 # max number of points process in a single job
-  17000 # 
-  sqrt(17000) # sqrt gives width height of window 
-  130 * 50 # multiply by 50m res for metres
+    dplyr::mutate(JobRunTimeKathleen = ((maxPoints * kathleenSpeed) / 60) / 60,
+                  numJobsKathleen = ceiling(grpNum / kathleenCores),
+                  totalRunTimeKathleen = numJobsKathleen * JobRunTimeKathleen,
+                  JobRunTimeAGIS = ((maxPoints * agisSpeed) / 60) / 60,
+                  numJobsAGIS = ceiling(grpNum / agisCores),
+                  totalRunTimeAGIS = numJobsAGIS * JobRunTimeAGIS
+    )
   
 }
-
 
 
 ##•┣ prepare grass env ----
 grassloc <- glue('{sysTmpDir}/grassdb')
 grassPermanent <- file.path(grassloc,'PERMANENT')
 
-# create location
+# create location if required
 if (dir.exists(grassloc)) unlink(grassloc,recursive = T)
 system(glue('grass -c EPSG:27700 {grassloc} -e'))
 
@@ -258,14 +240,6 @@ if (env == 'LOCAL') {
   datOut <- parallel::clusterApply(cl, c(4,7,8,11,12,13), viewpointAnalysis, cva=T)
 }
 
-# map storage size in megabytes
-mapMB <- mean(c(7.8,7.6,6.8,5.0,8.8,5.3)) / 100
-# memory required for all max points per tiles (40000)
-40000 * mapMB
-# max scratch memory is 25000
-# max num of cores if all max points
-floor(250000 / (40000 * mapMB))
-
 ##•┣ {snow} version for kathleen ----
 if (env == 'KATHLEEN') {
   #!! if offSet = T the use pd$tiles$pol !!
@@ -279,7 +253,7 @@ if (env == 'KATHLEEN') {
   snow::clusterExport(cl, varsToExport)
   print(Sys.time())
   print('running analysis...')
-  datOut <- snow::clusterApply(cl, 1:50, viewpointAnalysis, cva=T)
+  datOut <- snow::clusterApply(cl, 1:50, viewpointAnalysis, cva=F)
   # datOut <- snow::clusterApplyLB(cl, 1:50, viewpointAnalysis)
 }
 

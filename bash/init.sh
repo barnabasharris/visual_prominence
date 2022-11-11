@@ -5,6 +5,10 @@ module load nano/2.4.2
 module load gerun
 module load grass/8.0dev
 
+# needed for grass extension install
+# module load apr/1.5.2
+# module load subversion/1.8
+
 export TZ="Europe/London"
 export TMPDIR="/home/tcrnbgh/Scratch/tmp"
 

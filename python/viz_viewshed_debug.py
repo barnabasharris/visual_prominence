@@ -14,13 +14,13 @@ def my_print(text):
     sys.stdout.flush()
 
 # dummy vars for debugging
-dem = 'dem'
-viewdist = 10000
-viewobserver =  1.75
-viewtarget = 1.75
-pointsloc = '/tmp/viewpoints_221.gpkg'
-output_loc = "/media/mal/git/visual_prominence/outputs"
-output_it = '1'
+# dem = 'dem'
+# viewdist = 10000
+# viewobserver =  1.75
+# viewtarget = 1.75
+# pointsloc = '/tmp/viewpoints_221.gpkg'
+# output_loc = "/media/mal/git/visual_prominence/outputs"
+# output_it = '1'
 
 def calcViz(dem, viewdist, viewobserver, viewtarget, pointsloc, output_loc, output_it):
     # set region and mask
@@ -63,23 +63,25 @@ def calcViz(dem, viewdist, viewobserver, viewtarget, pointsloc, output_loc, outp
                        overwrite=True)
     
     # DEBUG: take a random sample of points
-    smpnum = 500
+    smpnum = 100
     my_print('sampling ' + str(smpnum) +' points from data...')
     smp = random.sample(range(0,len(pointlist)),smpnum)
     pointlist = [pointlist[i] for i in smp]
     
+    coords = []
+    for point in pointlist:
+      coords.append(point.split('|')[0] + ',' +  point.split('|')[1])
+      
     ## Reiterate through viewpoints
     my_print('iterating through ' + str(len(pointlist)) + ' points...')
     
-    for index, point in enumerate(pointlist):
-      #
-      my_print('point number ' + str(index) + '...')
-      outmap = 'point_view_' + str(index)
+    for coord in coords:
+      # my_print('point number ' + coord + '...')
       
       gscript.run_command('r.viewshed',
                         input=dem,
-                        coordinates=point.split('|')[0] + ',' +  point.split('|')[1],
-                        output=outmap,
+                        coordinates=coord,
+                        output='point_view',
                         max_distance=viewdist,
                         observer_elevation=viewobserver,
                         target_elevation=viewtarget,
@@ -87,12 +89,10 @@ def calcViz(dem, viewdist, viewobserver, viewtarget, pointsloc, output_loc, outp
                         overwrite = True,
                         flags='b')
       
-      gscript.raster.mapcalc('visual_prominence = visual_prominence + ' + outmap,
+      gscript.raster.mapcalc('visual_prominence = visual_prominence + point_view',
                            overwrite=True)
       
-      # export prominence map
-      my_print('exporting prominence map...')
-      
+    
     gscript.run_command('r.out.gdal',
                     input='visual_prominence',
                     output = output_loc + '/visual_prominence_' + str(output_it) + '.tif',

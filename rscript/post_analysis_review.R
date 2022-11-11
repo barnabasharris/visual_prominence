@@ -82,5 +82,39 @@ writeRaster(rMerged,'merged.tif')
 
 
 
+# work out speed
+if (env == 'LOCAL') {
+  r <- rast(r.tiles[[50]])
+  plot(r)
+  200*200
+  p.geom <- terra::geom(as.points(rast(r.tiles[[24]])))
+  
+  p.geom.coords <- 1:nrow(p.geom) %>% 
+    map_chr(.f = function(x) {
+      paste0(p.geom[x,c('x','y')],collapse='|')
+    })
+  
+  which(p.geom.coords == '322075|998025') / nrow(p.geom)
+  st <- lubridate::as_datetime('2022-11-09 14:18:51.726620')
+  now <- lubridate::as_datetime('2022-11-10 10:12:00.851957')
+  dur <- difftime(now, st, units='secs') / which(p.geom.coords == '322075|998025') # per point
+  
+  45 # hours (max run time)
+  (45 * 60) * 60  # seconds
+  162000 / 9.43 # max number of points process in a single job - kathleen
+  
+  24 # hours (max run time)
+  (24 * 60) * 60  # seconds
+  86400 / 0.5 # max number of points process in a single job - agis
+  
+  17000 # 
+  sqrt(17000) # sqrt gives width height of window 
+  130 * 50 # multiply by 50m res for metres
+  
+}
+
+
+
+
 
 
