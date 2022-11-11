@@ -3,13 +3,10 @@
 #  R MPI parallel job
 
 # Request ten minutes of wallclock time (format hours:minutes:seconds).
-#$ -l h_rt=4:00:0
+#$ -l h_rt=2:00:0
 
 # Request 1 gigabyte of RAM per process.
-#$ -l mem=300M
-
-# Set the name of the job.
-#$ -N visual_prominence
+#$ -l mem=100M
 
 # Select the MPI parallel environment with 32 processes
 #$ -pe mpi 50
