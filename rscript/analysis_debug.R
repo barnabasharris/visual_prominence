@@ -31,9 +31,9 @@ if (dir.exists('logs')) {
 dir.create('logs')
 
 # set system tmp
-Sys.setenv(TMPDIR=file.path(here(),'tmp'))
+# Sys.setenv(TMPDIR=file.path(here(),'tmp'))
 
-print('system tempdir is...')
+print('head node system tempdir is...')
 sysTmpDir <- Sys.getenv("TMPDIR")
 print(sysTmpDir)
 
@@ -46,61 +46,72 @@ system(glue('chmod -R +x {wd}/python/'))
 # pre-process date for analysis -----
 gridRes <- 6500 # decided by maximum job length allowed by kathleen, see  below
 demFile <- 'bigdata/os_50m_masked.tif'
+# 
+# # load terrain raster
+# r <- rast(demFile)
+# # make polygon outline of non-na cells
+# r.bin <- r
+# r.bin[!is.nan(r.bin)] <- 1
+# r.bin.pol <- as.polygons(r.bin)
+# 
+# # optional: how many vs to compute?
+# r.bin[is.nan(r.bin)] <- 0
+# global(r.bin, 'sum')
+# 
+# # copy original r to template
+# template <- terra::rast(r)
+# # set new res of template
+# res(template) <- gridRes
+# # add arbitrary values
+# values(template) <- 1:ncell(template)
+# 
+# # convert to polygons
+# template.pols <- as.polygons(template)
+# # clip grid by outline
+# template.pols.m <- terra::mask(template.pols,r.bin.pol)
+# 
+# viewdist <- 10000
+# 
+# # visualize
+# if (env == 'LOCAL') {
+#   plot(r)
+#   plot(template.pols.m, add=T)
+# }
+# 
+# # x <- 100
+# # loop through each polygon, load intersecting part of overall raster
+# r.tiles <- 
+#   1:length(template.pols.m) %>%
+#   map(.f = function(x) {
+#     print(x)
+#     dm <- gridRes / res(r)
+#     crsObj <- crs(r)
+#     p <- template.pols.m[x]
+#     exSpat <- ext(p)
+#     exNum <- c(exSpat$xmin,exSpat$xmax,exSpat$ymin,exSpat$ymax)
+#     names(exNum) <- NULL
+# 
+#     vals <- vapour::vapour_warp_raster(demFile, extent = exNum, dimension = dm, projection = crsObj)
+#     # can't set CRS here, as for some reason Kathleen throws an error when unwrapping the rast
+#     r <- setValues(rast(extent=exSpat, nrows = dm[2], ncols = dm[1]), vals[[1]])
+#     
+#     p.buff <- buffer(p, viewdist)
+#     exSpat <- ext(p.buff)
+#     exNum <- c(exSpat$xmin,exSpat$xmax,exSpat$ymin,exSpat$ymax)
+#     names(exNum) <- NULL
+#     vals <- vapour::vapour_warp_raster(demFile, extent = exNum, dimension = dm, projection = crsObj)
+#     # can't set CRS here, as for some reason Kathleen throws an error when unwrapping the rast
+#     r.buff <- setValues(rast(extent=exSpat, nrows = dm[2], ncols = dm[1]), vals[[1]])
+#     
+#     r.views <- wrap(r)
+#     r.dem <- wrap(r.buff)
+#     return(list(r.views = r.views,
+#                 r.dem = r.dem))
+#   })
 
-# load terrain raster
-r <- rast(demFile)
-# make polygon outline of non-na cells
-r.bin <- r
-r.bin[!is.nan(r.bin)] <- 1
-r.bin.pol <- as.polygons(r.bin)
+r.tiles <- readRDS('bigdata/rtiles_6500m.RDS')
 
-# optional: how many vs to compute?
-r.bin[is.nan(r.bin)] <- 0
-global(r.bin, 'sum')
-
-# copy original r to template
-template <- terra::rast(r)
-# set new res of template
-res(template) <- gridRes
-# add arbitrary values
-values(template) <- 1:ncell(template)
-
-# convert to polygons
-template.pols <- as.polygons(template)
-# clip grid by outline
-template.pols.m <- terra::mask(template.pols,r.bin.pol)
-
-# visualize
-if (env == 'LOCAL') {
-  plot(r)
-  plot(template.pols.m, add=T)
-}
-
-# x <- 100
-# loop through each polygon, load intersecting part of overall raster
-r.tiles <- 
-  1:length(template.pols.m) %>%
-  map(.f = function(x) {
-    print(x)
-    dm <- gridRes / res(r)
-    crsObj <- crs(r)
-    p <- template.pols[x]
-    exSpat <- ext(p)
-    exNum <- c(exSpat$xmin,exSpat$xmax,exSpat$ymin,exSpat$ymax)
-    names(exNum) <- NULL
-
-    vals <- vapour::vapour_warp_raster(demFile, extent = exNum, dimension = dm, projection = crsObj)
-    # can't set CRS here, as for some reason Kathleen throws an error when unwrapping the rast
-    r <- setValues(rast(extent=exSpat, nrows = dm[2], ncols = dm[1]), vals[[1]])
-    
-    if (all(is.nan(r[]))) {
-      return(NULL)
-    } else {
-      return(wrap(r))
-    }
-  }) %>% 
-  compact()
-
+# saveRDS(r.tiles,'bigdata/rtiles_6500m.RDS')
 
 if (env == 'LOCAL') {
   r.tiles.length <- r.tiles %>% 
@@ -136,26 +147,31 @@ if (env == 'LOCAL') {
                   totalRunTimeAGIS = numJobsAGIS * JobRunTimeAGIS
     )
   
+  tileDf.grp <- tileDf %>% 
+    dplyr::group_by(tilePointsGrp) %>% 
+    dplyr::group_split() %>% 
+    setNames(levels(tileDf$tilePointsGrp))
+  
+  numJobs <- ceiling(nrow(tileDf.grp$A)/250)
+  
+  indexList <- 
+    seq(1,nrow(tileDf.grp$A),by=250) %>% 
+    map(~.x:((.x-1)+250))
+  
+  indexList %>% 
+    map(~dplyr::slice(ileDf.grp,.x))
+  
+    
+  
 }
 
 
-##•┣ prepare grass env ----
-grassloc <- glue('{sysTmpDir}/grassdb')
-grassPermanent <- file.path(grassloc,'PERMANENT')
-
-# create location if required
-if (dir.exists(grassloc)) unlink(grassloc,recursive = T)
-system(glue('grass -c EPSG:27700 {grassloc} -e'))
-
-sharedDemName <- 'dem'
-# add raster to PERMANENT mapset for shared access across nodes
-system(glue('grass {grassPermanent} --exec r.in.gdal {file.path(here(),demFile)} output={sharedDemName}'))
 
 # multi-thread analysis ----
 
 ##•┣ define function ----
 # x <- 1
-# x <- 221
+# x <- 17
 viewpointAnalysis <- function(x, cva=F) {
   st <- Sys.time()
   library(terra)
@@ -166,13 +182,16 @@ viewpointAnalysis <- function(x, cva=F) {
     sink(glue('logs/analysis_cva_sinkout_{x}.txt'))
   } else sink(glue('logs/analysis_sinkout_{x}.txt'))
   
+  print('compute node system tempdir is...')
+  sysTmpDir <- Sys.getenv("TMPDIR")
+  print(sysTmpDir)
+  
   print('extracting raster tile...')
-  r <- rast(r.tiles[[x]])
+  r <- rast(r.tiles[[x]]$r.views)
   crs(r) <- 'EPSG:27700'
   
   # make into points
   print('converting to points...')
-  
   r.points <- as.points(r)
   
   # write points to disk, ready for grass import
@@ -181,14 +200,32 @@ viewpointAnalysis <- function(x, cva=F) {
   if (file.exists(pointsLoc)) file.remove(pointsLoc)
   writeVector(r.points,pointsLoc,overwrite=T)
   
+  # write section of dem to disk
+  r <- rast(r.tiles[[x]]$r.dem)
+  crs(r) <- 'EPSG:27700'
+  demLoc <- glue('{sysTmpDir}/viewdem_{x}.tif')
+  if (file.exists(demLoc)) file.remove(demLoc)
+  writeRaster(r,demLoc,overwrite=T)
+  
+  ##•┣ prepare grass env ----
+  grassloc <- glue('{sysTmpDir}/grassdb')
+  grassPermanent <- file.path(grassloc,'PERMANENT')
+  
+  # create location if required
+  if (dir.exists(grassloc)) unlink(grassloc,recursive = T)
+  system(glue('grass -c EPSG:27700 {grassloc} -e'))
+  
   # create grass mapset for node
   print('creating mapset...')
   grassMapset <- glue('{grassloc}/mapset_{x}')
   if (dir.exists(grassMapset)) unlink(grassMapset,recursive = T)
   system(glue('grass -c {grassloc}/mapset_{x} -e'))
   
+  sharedDemName <- 'dem'
+  # add raster to mapset 
+  system(glue('grass {grassMapset} --exec r.in.gdal {demLoc} output={sharedDemName}'))
+  
   dem <- sharedDemName
-  viewdist <- 10000
   viewobserver <-  1.75
   viewtarget <- 1.75
   pointsloc <- pointsLoc
@@ -210,6 +247,7 @@ viewpointAnalysis <- function(x, cva=F) {
   }
   
   print(paste0('running python script at...',pyLoc))
+  
   system2('grass',
           paste(grassMapset,
                 '--exec',
@@ -234,7 +272,7 @@ viewpointAnalysis <- function(x, cva=F) {
   return(print(glue('node with job {x} finished')))
 }
 
-varsToExport <- c('r.tiles','grassloc','sysTmpDir','wd','sharedDemName')
+varsToExport <- c('r.tiles','grassloc','sysTmpDir','wd','sharedDemName','viewdist')
 
 ##•┣ {parallel} version for testing ----
 if (env == 'LOCAL') {
