@@ -6,10 +6,10 @@
 #$ -l h_rt=0:40:0
 
 # Request 1 gigabyte of RAM per process.
-#$ -l mem=50M
+#$ -l mem=150M
 
 # Select the MPI parallel environment with 32 processes
-#$ -pe mpi 160
+#$ -pe mpi 50
 
 # Load R/GRASS environment
 echo "running init.sh script..."

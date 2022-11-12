@@ -208,7 +208,7 @@ viewpointAnalysis <- function(x, cva=F) {
   writeRaster(r,demLoc,overwrite=T)
   
   ##•┣ prepare grass env ----
-  grassloc <- glue('{sysTmpDir}/grassdb')
+  grassloc <- glue('{sysTmpDir}/grassdb_{x}')
   grassPermanent <- file.path(grassloc,'PERMANENT')
   
   # create location if required
